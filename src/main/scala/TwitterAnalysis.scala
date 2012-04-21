@@ -5,11 +5,11 @@ import java.util.Calendar
 import processing.core._
 import processing.core.PConstants._
 
-class TwitterAnalysis {
+object TwitterAnalysis {
 
   class Embedded extends PApplet with MyPExtention with MyDrawingTools {
     // data
-    val proximities = new Proximities(scala.io.Source.fromFile("/Users/Altech/dev/twitter_demo/dataset/single_topn2.json").getLines)
+    val proximities = new Proximities(scala.io.Source.fromFile("/Users/Altech/dev/twitter_demo/src/main/resources/single_topn.json").getLines)
     var sequences: List[(Int, Date, Array[Int])] = proximities.find()
     var (seq_no,time,topk) = sequences.head; sequences = sequences.tail;
     var target_id = topk(0)
@@ -22,7 +22,7 @@ class TwitterAnalysis {
     
     override def draw {
       draw_init
-
+      
       set_ambient_right
 
       top {
@@ -144,7 +144,7 @@ class TwitterAnalysis {
   
   
   def main(args: Array[String]) {
-    println("Hello, world!")
+    println("Application will be open")
     
     val root_frame = new javax.swing.JFrame("Test")
     val root_applet = new Applet // ブラウザ上ではアプレットがルートになる
