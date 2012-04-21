@@ -9,7 +9,7 @@ object TwitterAnalysis {
 
   class Embedded extends PApplet with MyPExtention with MyDrawingTools {
     // data
-    val proximities = new Proximities(scala.io.Source.fromFile("/Users/Altech/dev/twitter_demo/src/main/resources/converted_topn.json").getLines)
+    val proximities = new Proximities(scala.io.Source.fromFile("/Users/Altech/dev/twitter_demo/src/main/resources/single_topn.json").getLines)
     var (target_id,sequences): (Int,List[(Int, Date, Array[Int])]) = proximities.find()
     var (seq_no,time,topk) = sequences.head; sequences = sequences.tail;
     var positions = new PositionsUpdater(topk)
@@ -24,12 +24,14 @@ object TwitterAnalysis {
     val mini_width = 500
     val mini_height = 500
     val default_font = createFont("Helvetica",32)
+    val default_font_small = createFont("Helvetica",18)
     val time_font = createFont("Krungthep",32)
     val time_format = new java.text.SimpleDateFormat("yyy/MM/dd HH:mm")
     val bg = loadImage("bg3.png")
     val button_play = loadImage("button_play.png")
     val button_stop = loadImage("button_stop.png")
     val button_end = loadImage("button_end.png")
+    
     // objects
     var button_play_coordinates = (0,0)
     var button_stop_coordinates = (0,0)
@@ -40,7 +42,11 @@ object TwitterAnalysis {
 
       translate((width-mini_width)/2,50){
 	top {
-	  text("Frame Count: " + frame_count,10,30)
+	  textFont(default_font_small)
+	  fill(73,142,255)
+	  text("Target User : " + target_id, 10, 30)
+	  text("Top10 :" + topk.mkString(","), 10, 60)
+	  // text("Frame Count: " + frame_count,10,30)
 	}
 
 	translate(10,mini_height-60){
@@ -49,15 +55,10 @@ object TwitterAnalysis {
 	  text(time_format.format(time),10,40)
 	  textFont(default_font) // fix later
 	}
-	translate(0,0,-500){
 	
+	translate(0,0,0){
 	  set_ambient_right
 	
-	  top {
-	    text("Target User : " + target_id, 0, -80)
-	    text("Top10 :" + topk.mkString(","), 0, -30)
-	  }
-
 	  translate(mini_width/2,mini_height/2) {
 	    rotate_next {
 	      draw_positions(target_id,positions.get)
@@ -80,7 +81,6 @@ object TwitterAnalysis {
 	button_play_coordinates = (screenX(0,0,0).toInt,screenY(0,0,0).toInt)
 	button_stop_coordinates = (screenX(60,0,0).toInt,screenY(60,0,0).toInt)
       }
-      
       
       update_time
       if (!(time.before(sequences.head._2))){
@@ -107,8 +107,10 @@ object TwitterAnalysis {
       textFont(default_font)
     }
     def set_ambient_right {
-      directionalLight(126, 126, 126, 0, 0, -1)
+      directionalLight(255, 255, 255, 0, 0, -1)
+      // directionalLight(126, 126, 126, 0, 0, -1)
       ambientLight(102, 102, 102)
+      // ambientLight(256, 256, 256)
     }
 
     // event
@@ -175,14 +177,19 @@ object TwitterAnalysis {
     def draw_positions(target_id:Int, positions:Map[Int,(Int,Int,Int)]) {
       for((id,position) <- positions) {
 	translate(position) {
-	  if (id == target_id)
-	    fill(204, 102, 0)
-	  else
-	    fill(255)
-	  sphere(30)
+	  if (id == target_id){
+	    // fill(0,255,255) // bright blue
+	    fill(0,200,200)
+	    sphere(30)
+	  }
+	  else {
+	    // fill(0,38,188) // deep blue
+	    // fill(231,223,0) // bright yellow
+	    fill(235,96,160)
+	    sphere(30)
+	  }
 	  // println("distance[" + id.toString + "]:" + Math.sqrt(position._1*position._1 + position._2*position._2 + position._3*position._3).toString)
 	}
-	// line(0,0,0,position._1,position._2,position._3)
 	stroke_and_smooth_draw(255) {
 	  line_to_position(position)
 	}
