@@ -39,7 +39,6 @@ class PositionsUpdater(var ids:Array[Int]) {
       println("inserted_ids" + inserted_ids.toString)
     }
     
-
     // new
     for((id,i) <- ids zipWithIndex){
       nodes.get(id) match {
@@ -48,11 +47,11 @@ class PositionsUpdater(var ids:Array[Int]) {
       }
     }
 
-    // debug
-    if(!deleted_ids.isEmpty){
-      println("\nbefore:")
-      dump_position
-    }
+    // // debug
+    // if(!deleted_ids.isEmpty){
+    //   println("\nbefore:")
+    //   dump_position
+    // }
       
     
     // delete
@@ -77,15 +76,26 @@ class PositionsUpdater(var ids:Array[Int]) {
       nodes(other_id) << nodes(main_id)
     }
 
+<<<<<<< HEAD
     if(!deleted_ids.isEmpty){
       println("\nafter:")
       dump_position
     }
+=======
+    // if(!deleted_ids.isEmpty){
+    //   println("\nafter:")
+    //   dump_position
+    // }
+>>>>>>> 3f2b7e94e2587b91222b0f020df5a380d5f1cbd8
   
   }
 
   def next {
+<<<<<<< HEAD
     for (i <- 1 to 5) {
+=======
+    for (i <- 1 to 2) {
+>>>>>>> 3f2b7e94e2587b91222b0f020df5a380d5f1cbd8
       for((id,node) <- nodes){
 	var f = Vector((0,0,0))
 	for(neighbor <- node.neighbors)
