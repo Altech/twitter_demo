@@ -30,9 +30,9 @@ class Proximities(jsons: Iterator[String]){
 
   def get_users:Set[Int] = container.keySet.toSet
 
-  def find(user_id: Int):List[(Int, Date, Array[Int])] = container(user_id)
+  def find(user_id: Int):(Int,List[(Int, Date, Array[Int])]) = (user_id,container(user_id))
   
-  def find():List[(Int, Date, Array[Int])] = next._2 // fix?
+  def find():(Int,List[(Int, Date, Array[Int])]) = next // fix?
 
   private var user_iterator = get_users.iterator
   def next():(Int,List[(Int, Date, Array[Int])]) = {

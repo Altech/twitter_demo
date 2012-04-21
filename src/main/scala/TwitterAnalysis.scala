@@ -9,10 +9,9 @@ object TwitterAnalysis {
 
   class Embedded extends PApplet with MyPExtention with MyDrawingTools {
     // data
-    val proximities = new Proximities(scala.io.Source.fromFile("/Users/Altech/dev/twitter_demo/src/main/resources/single_topn.json").getLines)
-    var sequences: List[(Int, Date, Array[Int])] = proximities.find()
+    val proximities = new Proximities(scala.io.Source.fromFile("/Users/Altech/dev/twitter_demo/src/main/resources/converted_topn.json").getLines)
+    var (target_id,sequences): (Int,List[(Int, Date, Array[Int])]) = proximities.find()
     var (seq_no,time,topk) = sequences.head; sequences = sequences.tail;
-    var target_id = topk(0)
     var positions = new PositionsUpdater(topk)
     var visible_related_users = 10
     
@@ -54,9 +53,9 @@ object TwitterAnalysis {
 	
 	  set_ambient_right
 	
-	  bottom {
-	    text("Target User : " + target_id, 20, -80)
-	    text("Top10 :" + topk.mkString(","), 20, -30)
+	  top {
+	    text("Target User : " + target_id, 0, -80)
+	    text("Top10 :" + topk.mkString(","), 0, -30)
 	  }
 
 	  translate(mini_width/2,mini_height/2) {
@@ -115,7 +114,9 @@ object TwitterAnalysis {
     // event
     override def mousePressed {
       if(is_in_square((mouseX,mouseY),button_end_coordinates,25)){
-	println("end")
+	switchUser
+	noLoop
+	isPlaying = false
       }
       else if(is_in_square((mouseX,mouseY),button_play_coordinates,25)){
 	if(!isPlaying)
@@ -129,8 +130,29 @@ object TwitterAnalysis {
       }
     }
 
-    //def switchUser
-      
+    def switchUser(userID:Int) {
+      val proximity = proximities.find()
+      target_id = proximity._1
+      sequences = proximity._2
+      seq_no = sequences.head._1
+      time  = sequences.head._2
+      topk  = sequences.head._3
+      sequences = sequences.tail
+      positions = new PositionsUpdater(topk)
+    }
+
+    def switchUser() {
+      val proximity = proximities.find()
+      target_id = proximity._1
+      sequences = proximity._2
+      seq_no = sequences.head._1
+      time  = sequences.head._2
+      topk  = sequences.head._3
+      sequences = sequences.tail
+      target_id = topk(0)
+      positions = new PositionsUpdater(topk)
+    }
+    
     // routines
     def rotate_next(f: => Unit) {
       r += 1
