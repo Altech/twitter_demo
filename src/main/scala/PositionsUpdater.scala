@@ -53,7 +53,6 @@ class PositionsUpdater(var ids:Array[Int]) {
       println("\nbefore:")
       dump_position
     }
-      
     
     // delete
     val deleted_id_iter = deleted_ids.iterator
