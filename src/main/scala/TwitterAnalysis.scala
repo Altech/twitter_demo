@@ -17,7 +17,8 @@ object TwitterAnalysis {
     var visibleRelatedUsers = 10
     val maxVisibleRelatedUsers = 100
     var cameraDistance = 500
-    var maxCameraDistance = 1000
+    val maxCameraDistance = 1000
+    val minCameraDistance = 500
     topk = topk.take(visibleRelatedUsers+1)
     var positions = new PositionsUpdater(topk)
     
@@ -30,9 +31,6 @@ object TwitterAnalysis {
     val miniHeight = 500
     val defaultFont = createFont("Helvetica",32)
     val defaultFontSmall = createFont("Helvetica",18*2)
-    val defaultFontMini = createFont("Helvetica",8)
-    val arialFont = createFont("Arial",32)
-    val arialFontSmall = createFont("Arial",16)
     val timeFont = createFont("Krungthep",32*2)
     val timeFormat = new java.text.SimpleDateFormat("yyyy/MM/dd HH:mm")
     val bg = loadImage("bg5-5.png")
@@ -42,8 +40,7 @@ object TwitterAnalysis {
     val buttonStop = loadImage("button_stop.png")
     val buttonEnd = loadImage("button_end.png")
     
-    // objects
-    var vartexCoordinates = Map[Int,(Float,Float,Float)]()
+    // object coordinates 
     var scaleBarCoordinates = ((0,0),(0,0));
     var zoomBarCoordinates =  ((0,0),(0,0));
     var buttonSwitchUser = ((777,497),(974,545));
@@ -59,10 +56,11 @@ object TwitterAnalysis {
 	top {
 	  textFont(defaultFontSmall)
 	  fill(73,142,255)
-	  scale(0.5f)
-	  text("Analized user : " + nameList(targetId), 10*2, 25*2)
-	  text("Most related : " + topk.drop(1).take(3).map(nameList(_)).mkString(", ") + ", ...", 10*2, 50*2)
-	  scale(2.0f)
+	  val hereScale = 0.5f
+	  scaleDraw(hereScale){
+	    text("Analized user : " + nameList(targetId), 10*(1.0f/hereScale), 25*(1.0f/hereScale))
+	    text("Most related : " + topk.drop(1).take(3).map(nameList(_)).mkString(", ") + ", ...", 10*(1.0f/hereScale), 50*(1.0f/hereScale))
+	  }
 	  stroke(73*0.8f,142*0.8f,255*0.8f)
 	  line(10,60,miniWidth-10,60)
 	  stroke(73*0.6f,142*0.6f,255*0.6f)
@@ -73,22 +71,20 @@ object TwitterAnalysis {
 	translate(10,miniHeight-60){
 	  textFont(timeFont)
 	  fill(73,142,255)
-	  val hereScale = 2
-	  scale(1.0f/hereScale)
-	  text(timeFormat.format(time),10*hereScale,40*hereScale)
-	  scale(hereScale)
-	  textFont(defaultFont) 
+	  val hereScale = 0.5f
+	  scaleDraw(hereScale) {
+	    text(timeFormat.format(time),10*(1.0f/hereScale),40*(1.0f/hereScale))
+	  }
 	}
 	
-	translate(0,0,500-cameraDistance){
+	translate(0,0,minCameraDistance-cameraDistance){
 	  setAmbientRight
-	
 	  translate(miniWidth/2,miniHeight/2) {
+	    /// draw vertex
 	    rotateNext {
 	      drawPositions(targetId,positions.get)
-	      vartexCoordinates = positions.get.mapValues(xyz => (modelX(xyz),modelY(xyz),modelZ(xyz)))
 	    }
-	    
+	    // draw user name
 	    for((id,(x,y,z)) <- positions.get){
 	      pushMatrix
 	      rotateY(radians(r))
@@ -106,16 +102,14 @@ object TwitterAnalysis {
 	      text(nameList(id),dx-miniWidth/2-(width-miniWidth)/2+60,dy-miniHeight/2-50,dz-(500-cameraDistance))
 	      popMatrix
 	    }
-
 	  }
 	}
 
       }
-      noLights      
-        
-      imageMode(CORNER)
-      // image(bg,0,0)
+      
+      noLights
 
+      // buttons
       translate(width/2,height-50){
 	imageMode(CENTER)
 	image(buttonEnd,-60,0)
@@ -125,7 +119,7 @@ object TwitterAnalysis {
 	buttonPlayCoordinates = (screenX(0,0,0).toInt,screenY(0,0,0).toInt)
 	buttonStopCoordinates = (screenX(60,0,0).toInt,screenY(60,0,0).toInt)
       }
-
+      // slide bars
       translate(width/2+miniWidth/2,0){
 	val barWidth = 137
 	val barLeft = 95
@@ -140,7 +134,8 @@ object TwitterAnalysis {
 	  image(slideBar,barWidth-(cameraDistance.toFloat/maxCameraDistance.toFloat)*barWidth,0)
 	}
       }
-      
+
+      // update data
       sequences match {
 	case head :: tail => {
 	  updateTime
@@ -249,7 +244,6 @@ object TwitterAnalysis {
       val cal = Calendar.getInstance(); cal.setTime(time); cal.add(Calendar.MINUTE, interval)
       time = cal.getTime()
     }
-
   
   }
 
@@ -298,6 +292,7 @@ object TwitterAnalysis {
     def smoothDraw(f: => Unit) = {smooth(); f; noSmooth()}
     def strokeDraw(color:Int)(f: => Unit) = {stroke(color); f; noStroke()}
     def strokeAndSmoothDraw(color:Int)(f: => Unit) = {stroke(color); smooth(); f; noStroke(); noSmooth()}
+    def scaleDraw(s:Float)(f: => Unit) = {scale(s); f; scale(1.0f/s)}
     def top(f: => Unit) = { super.translate(0,0); f; super.translate(0,0) }
     def bottom(f: => Unit) = { super.translate(0,height); f; super.translate(0,-height) }
     def center(f: => Unit) = { super.translate(width/2, height/2); f; super.translate(-width/2, -height/2); }
