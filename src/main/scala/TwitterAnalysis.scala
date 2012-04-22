@@ -10,58 +10,57 @@ object TwitterAnalysis {
   class Embedded extends PApplet with MyPExtention with MyDrawingTools {
     // data
     val proximities = new Proximities(scala.io.Source.fromFile("/Users/Altech/dev/twitter_demo/src/main/resources/single_topn.json").getLines)
-    var (target_id,sequences): (Int,List[(Int, Date, Array[Int])]) = proximities.find()
-    var (seq_no,time,topk) = sequences.head; sequences = sequences.tail;
+    var (targetId,sequences): (Int,List[(Int, Date, Array[Int])]) = proximities.find()
+    var (seqNo,time,topk) = sequences.head; sequences = sequences.tail;
     var positions = new PositionsUpdater(topk)
-    var visible_related_users = 10
+    var visibleRelatedUsers = 10
     
     // animation status
     var isPlaying = true
     var r = 0
-    var frame_count = 0
 
     // view 
-    val mini_width = 500
-    val mini_height = 500
-    val default_font = createFont("Helvetica",32)
-    val default_font_small = createFont("Helvetica",18)
-    val time_font = createFont("Krungthep",32)
-    val time_format = new java.text.SimpleDateFormat("yyy/MM/dd HH:mm")
+    val miniWidth = 500
+    val miniHeight = 500
+    val defaultFont = createFont("Helvetica",32)
+    val defaultFontSmall = createFont("Helvetica",18)
+    val timeFont = createFont("Krungthep",32)
+    val timeFormat = new java.text.SimpleDateFormat("yyy/MM/dd HH:mm")
     val bg = loadImage("bg3.png")
-    val button_play = loadImage("button_play.png")
-    val button_stop = loadImage("button_stop.png")
-    val button_end = loadImage("button_end.png")
+    val buttonPlay = loadImage("button_play.png")
+    val buttonStop = loadImage("button_stop.png")
+    val buttonEnd = loadImage("button_end.png")
     
     // objects
-    var button_play_coordinates = (0,0)
-    var button_stop_coordinates = (0,0)
-    var button_end_coordinates = (0,0)
+    var buttonPlayCoordinates = (0,0)
+    var buttonStopCoordinates = (0,0)
+    var buttonEndCoordinates = (0,0)
     
     override def draw {
-      draw_init
+      drawInit
 
-      translate((width-mini_width)/2,50){
+      translate((width-miniWidth)/2,50){
 	top {
-	  textFont(default_font_small)
+	  textFont(defaultFontSmall)
 	  fill(73,142,255)
-	  text("Target User : " + target_id, 10, 30)
+	  text("Target User : " + targetId, 10, 30)
 	  text("Top10 :" + topk.mkString(","), 10, 60)
-	  // text("Frame Count: " + frame_count,10,30)
+	  // text("Frame Count: " + frameCount,10,30)
 	}
 
-	translate(10,mini_height-60){
-	  textFont(time_font)
+	translate(10,miniHeight-60){
+	  textFont(timeFont)
 	  fill(73,142,255)
-	  text(time_format.format(time),10,40)
-	  textFont(default_font) // fix later
+	  text(timeFormat.format(time),10,40)
+	  textFont(defaultFont) // fix later
 	}
 	
 	translate(0,0,0){
-	  set_ambient_right
+	  setAmbientRight
 	
-	  translate(mini_width/2,mini_height/2) {
-	    rotate_next {
-	      draw_positions(target_id,positions.get)
+	  translate(miniWidth/2,miniHeight/2) {
+	    rotateNext {
+	      drawPositions(targetId,positions.get)
 	    }
 	  }
 	}
@@ -74,18 +73,18 @@ object TwitterAnalysis {
 
       translate(width/2,height-50){
 	imageMode(CENTER)
-	image(button_end,-60,0)
-	image(button_play,0,0)
-	image(button_stop,60,0)
-	button_end_coordinates = (screenX(-60,0,0).toInt,screenY(-60,0,0).toInt)
-	button_play_coordinates = (screenX(0,0,0).toInt,screenY(0,0,0).toInt)
-	button_stop_coordinates = (screenX(60,0,0).toInt,screenY(60,0,0).toInt)
+	image(buttonEnd,-60,0)
+	image(buttonPlay,0,0)
+	image(buttonStop,60,0)
+	buttonEndCoordinates = (screenX(-60,0,0).toInt,screenY(-60,0,0).toInt)
+	buttonPlayCoordinates = (screenX(0,0,0).toInt,screenY(0,0,0).toInt)
+	buttonStopCoordinates = (screenX(60,0,0).toInt,screenY(60,0,0).toInt)
       }
       
-      update_time
+      updateTime
       if (!(time.before(sequences.head._2))){
 	// println("update_bef:" + topk.mkString(","))
-      	seq_no = sequences.head._1
+      	seqNo = sequences.head._1
       	time  = sequences.head._2
       	topk  = sequences.head._3
       	sequences = sequences.tail
@@ -94,19 +93,19 @@ object TwitterAnalysis {
       }
       positions.next
 
-      frame_count += 1
+      frameCount += 1
     }
 
 
     // setting
     override def setup {
       super.setup
-      frameRate(15)
+      // frameRate(15)
       size(1000,650,P3D)
       // noLoop
-      textFont(default_font)
+      textFont(defaultFont)
     }
-    def set_ambient_right {
+    def setAmbientRight {
       directionalLight(255, 255, 255, 0, 0, -1)
       // directionalLight(126, 126, 126, 0, 0, -1)
       ambientLight(102, 102, 102)
@@ -115,17 +114,17 @@ object TwitterAnalysis {
 
     // event
     override def mousePressed {
-      if(is_in_square((mouseX,mouseY),button_end_coordinates,25)){
+      if(isInSquare((mouseX,mouseY),buttonEndCoordinates,25)){
 	switchUser
 	noLoop
 	isPlaying = false
       }
-      else if(is_in_square((mouseX,mouseY),button_play_coordinates,25)){
+      else if(isInSquare((mouseX,mouseY),buttonPlayCoordinates,25)){
 	if(!isPlaying)
 	  loop
 	isPlaying = true
       }
-      else if(is_in_square((mouseX,mouseY),button_stop_coordinates,25)){
+      else if(isInSquare((mouseX,mouseY),buttonStopCoordinates,25)){
 	if(isPlaying)
 	  noLoop
 	isPlaying = false
@@ -134,9 +133,9 @@ object TwitterAnalysis {
 
     def switchUser(userID:Int) {
       val proximity = proximities.find()
-      target_id = proximity._1
+      targetId = proximity._1
       sequences = proximity._2
-      seq_no = sequences.head._1
+      seqNo = sequences.head._1
       time  = sequences.head._2
       topk  = sequences.head._3
       sequences = sequences.tail
@@ -145,18 +144,17 @@ object TwitterAnalysis {
 
     def switchUser() {
       val proximity = proximities.find()
-      target_id = proximity._1
+      targetId = proximity._1
       sequences = proximity._2
-      seq_no = sequences.head._1
+      seqNo = sequences.head._1
       time  = sequences.head._2
       topk  = sequences.head._3
       sequences = sequences.tail
-      target_id = topk(0)
       positions = new PositionsUpdater(topk)
     }
     
     // routines
-    def rotate_next(f: => Unit) {
+    def rotateNext(f: => Unit) {
       r += 1
       rotateY(radians(r))
       f
@@ -164,7 +162,7 @@ object TwitterAnalysis {
       if (r == 360)
       	r == 0
     }
-    def update_time {
+    def updateTime {
       val interval = 1
       val cal = Calendar.getInstance(); cal.setTime(time); cal.add(Calendar.MINUTE, interval)
       time = cal.getTime()
@@ -174,10 +172,10 @@ object TwitterAnalysis {
   }
 
   trait MyDrawingTools extends PApplet with MyPExtention {
-    def draw_positions(target_id:Int, positions:Map[Int,(Int,Int,Int)]) {
+    def drawPositions(targetId:Int, positions:Map[Int,(Int,Int,Int)]) {
       for((id,position) <- positions) {
 	translate(position) {
-	  if (id == target_id){
+	  if (id == targetId){
 	    // fill(0,255,255) // bright blue
 	    fill(0,200,200)
 	    sphere(30)
@@ -190,8 +188,8 @@ object TwitterAnalysis {
 	  }
 	  // println("distance[" + id.toString + "]:" + Math.sqrt(position._1*position._1 + position._2*position._2 + position._3*position._3).toString)
 	}
-	stroke_and_smooth_draw(255) {
-	  line_to_position(position)
+	strokeAndSmoothDraw(255) {
+	  lineToPosition(position)
 	}
       }
     }
@@ -204,26 +202,26 @@ object TwitterAnalysis {
       noStroke
     }
 
-    def draw_init {
+    def drawInit {
       background(0)
       fill(255)
     }
     
     def radians(i:Int):Float = (i * 3.141592f)/180.0f
-    def smooth_draw(f: => Unit) = {smooth(); f; noSmooth()}
-    def stroke_draw(color:Int)(f: => Unit) = {stroke(color); f; noStroke()}
-    def stroke_and_smooth_draw(color:Int)(f: => Unit) = {stroke(color); smooth(); f; noStroke(); noSmooth()}
+    def smoothDraw(f: => Unit) = {smooth(); f; noSmooth()}
+    def strokeDraw(color:Int)(f: => Unit) = {stroke(color); f; noStroke()}
+    def strokeAndSmoothDraw(color:Int)(f: => Unit) = {stroke(color); smooth(); f; noStroke(); noSmooth()}
     def top(f: => Unit) = { super.translate(0,0); f; super.translate(0,0) }
     def bottom(f: => Unit) = { super.translate(0,height); f; super.translate(0,-height) }
     def center(f: => Unit) = { super.translate(width/2, height/2); f; super.translate(-width/2, -height/2); }
-    def center_x(f: => Unit) = { super.translate(width/2, 0); f; super.translate(-width/2, 0); }
-    def center_y(f: => Unit) = { super.translate(0, height/2); f; super.translate(0, -height/2); }
+    def centerX(f: => Unit) = { super.translate(width/2, 0); f; super.translate(-width/2, 0); }
+    def centerY(f: => Unit) = { super.translate(0, height/2); f; super.translate(0, -height/2); }
     def translate(dx:Int, dy:Int)(f: => Unit) = { super.translate(dx,dy,0); f; super.translate(-dx,-dy,0);}
     def translate(dx:Int, dy:Int, dz:Int)(f: => Unit) = { super.translate(dx,dy,dz); f; super.translate(-dx,-dy,-dz);}
     def translate(dr:(Int,Int,Int))(f: => Unit) = { super.translate(dr._1,dr._2,dr._3); f; super.translate(-dr._1,-dr._2,-dr._3) }
-    def line_to_position(dr:(Int,Int,Int)) = line(0,0,0,dr._1,dr._2,dr._3)
+    def lineToPosition(dr:(Int,Int,Int)) = line(0,0,0,dr._1,dr._2,dr._3)
     def text(time:Date,x:Int,y:Int) = { super.text(new SimpleDateFormat("yyyy'年'MM'月'dd'日' kk:mm").format(time),x,y) }
-    def is_in_square(point:(Int,Int), center:(Int,Int), r:Int) = {
+    def isInSquare(point:(Int,Int), center:(Int,Int), r:Int) = {
       center._1-r <= point._1 && point._1 <= center._1+r  &&  center._2-r <= point._2 && point._2 <= center._2+r
     }
     
@@ -233,16 +231,16 @@ object TwitterAnalysis {
   def main(args: Array[String]) {
     println("Application will be open")
     
-    val root_frame = new javax.swing.JFrame("Test")
-    val root_applet = new Applet // ブラウザ上ではアプレットがルートになる
-    root_frame.getContentPane().add(root_applet)
+    val rootFrame = new javax.swing.JFrame("Twitter Analysis")
+    val rootApplet = new Applet // ブラウザ上ではアプレットがルートになる
+    rootFrame.getContentPane().add(rootApplet)
     
-    val embedded_applet = new Embedded//(sample_data)
-    root_applet.add(embedded_applet)
-    embedded_applet.init
+    val embeddedApplet = new Embedded//(sample_data)
+    rootApplet.add(embeddedApplet)
+    embeddedApplet.init
     
-    root_frame.pack
-    root_frame.setVisible(true)
+    rootFrame.pack
+    rootFrame.setVisible(true)
   }
 
 }

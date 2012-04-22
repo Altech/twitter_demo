@@ -1,84 +1,84 @@
 class PositionsUpdater(var ids:Array[Int]) {
-  val main_id = ids(0)
-  def other_ids = ids.filter(_ != main_id)
+  val mainId = ids(0)
+  def otherIds = ids.filter(_ != mainId)
   val nodes = collection.mutable.Map[Int,Node]()
   val dt = 0.1d
-  init_nodes()
-  init_positions()
+  initNodes()
+  initPositions()
 
-  def init_nodes() {
+  def initNodes() {
     for((id,i) <- ids zipWithIndex)
       nodes += id -> Node(i)
-    for(other_id <- other_ids){
-      nodes(main_id) << nodes(other_id)
-      nodes(other_id) << nodes(main_id)
+    for(otherId <- otherIds){
+      nodes(mainId) << nodes(otherId)
+      nodes(otherId) << nodes(mainId)
     }
-    nodes(main_id).m = 10 // 中心ノードは固定（質量大）
+    nodes(mainId).m = 10 // 中心ノードは固定（質量大）
   }
 
-  def init_positions() {
+  def initPositions() {
     for (i <- 1 to 5000) {
       for((id,node) <- nodes){
 	var f = Vector((0,0,0))
 	for(neighbor <- node.neighbors)
-	  f = f + node.get_spring_force(neighbor)
-	for((other_id,other_node) <- nodes if id != other_id)
-	  f = f + node.get_replusive_force(other_node)
-	f = f + node.get_frictional_force
-	node.move_eular(dt,f)
+	  f = f + node.getSpringForce(neighbor)
+	for((otherId,otherNode) <- nodes if id != otherId)
+	  f = f + node.getReplusiveForce(otherNode)
+	f = f + node.getFrictionalForce
+	node.moveEular(dt,f)
       }
     }
   }
 
-  def update(new_ids:Array[Int]) {
-    val deleted_ids = ids.toSet -- new_ids.toSet
-    val inserted_ids = new_ids.toSet -- ids.toSet
-    ids = new_ids
-    if (!deleted_ids.isEmpty){
-      println("deleted_ids" + deleted_ids.toString)
-      println("inserted_ids" + inserted_ids.toString)
+  def update(newIds:Array[Int]) {
+    val deletedIds = ids.toSet -- newIds.toSet
+    val insertedIds = newIds.toSet -- ids.toSet
+    ids = newIds
+    if (!deletedIds.isEmpty){
+      println("deletedIds" + deletedIds.toString)
+      println("insertedIds" + insertedIds.toString)
     }
     
 
     // new
     for((id,i) <- ids zipWithIndex){
       nodes.get(id) match {
-    	case Some(node) => node.set_rank(i)
+    	case Some(node) => node.setRank(i)
     	case None => nodes += id -> Node(i)
       }
     }
 
     // debug
-    if(!deleted_ids.isEmpty){
+    if(!deletedIds.isEmpty){
       println("\nbefore:")
-      dump_position
+      dumpPosition
     }
     
     // delete
-    val deleted_id_iter = deleted_ids.iterator
-    val base_position = nodes(main_id).r
-    for(inserted_id <- inserted_ids; deleted_id = deleted_id_iter.next){
-      val old_position = nodes(deleted_id).r
-      val get_new_position = ((old:Double,base:Double)=> (old-base)*5+base)
-	val new_position = Vector((get_new_position(old_position.x,base_position.x),get_new_position(old_position.y,base_position.y),get_new_position(old_position.z,base_position.z)))
-      // println("old_position:" + old_position.toString)
-      // println("base_position:" + base_position.toString)
-      // println("new_position:" + new_position.toString)
-      nodes(inserted_id).r = new_position
-      nodes.remove(deleted_id)
+    val deletedIdIter = deletedIds.iterator
+    val basePosition = nodes(mainId).r
+    for(insertedId <- insertedIds; deletedId = deletedIdIter.next){
+      val oldPosition = nodes(deletedId).r
+      val getNewPosition = ((old:Double,base:Double)=> (old-base)*5+base)
+	val newPosition = Vector((getNewPosition(oldPosition.x,basePosition.x),getNewPosition(oldPosition.y,basePosition.y),getNewPosition(oldPosition.z,basePosition.z)))
+      // println("oldPosition:" + oldPosition.toString)
+      // println("basePosition:" + basePosition.toString)
+      // println("newPosition:" + newPosition.toString)
+      nodes(insertedId).r = newPosition
+      nodes.remove(deletedId)
     }
     
     // set neighbors
     for((id,i) <- ids zipWithIndex)
       nodes(id).neighbors = Nil
-    for(other_id <- other_ids){
-      nodes(main_id) << nodes(other_id)
-      nodes(other_id) << nodes(main_id)
+    for(otherId <- otherIds){
+      nodes(mainId) << nodes(otherId)
+      nodes(otherId) << nodes(mainId)
     }
 
-    if(!deleted_ids.isEmpty){
+    if(!deletedIds.isEmpty){
       println("\nafter:")
-      dump_position
+      dumpPosition
     }
   
   }
@@ -88,26 +88,26 @@ class PositionsUpdater(var ids:Array[Int]) {
       for((id,node) <- nodes){
 	var f = Vector((0,0,0))
 	for(neighbor <- node.neighbors)
-	  f = f + node.get_spring_force(neighbor)
-	for((other_id,other_node) <- nodes if id != other_id)
-	  f = f + node.get_replusive_force(other_node)
-	f = f + node.get_frictional_force
-	node.move_eular(dt,f)
+	  f = f + node.getSpringForce(neighbor)
+	for((otherId,otherNode) <- nodes if id != otherId)
+	  f = f + node.getReplusiveForce(otherNode)
+	f = f + node.getFrictionalForce
+	node.moveEular(dt,f)
       }
     }
   }
   
   def get():Map[Int,(Int,Int,Int)] = {
-    val base_position = nodes(main_id).r
-    val return_value = nodes.toMap.mapValues(_.r).mapValues(p => (p-base_position)).mapValues(_.p).mapValues(p => (p._1.toInt,p._2.toInt,p._3.toInt))
+    val basePosition = nodes(mainId).r
+    val returnValue = nodes.toMap.mapValues(_.r).mapValues(p => (p-basePosition)).mapValues(_.p).mapValues(p => (p._1.toInt,p._2.toInt,p._3.toInt))
     // for((k,v) <- return_value)
     //   println(k.toString + ':' + v.toString)
-    return_value    
+    returnValue    
   }
 
-  def dump_position {
-    println("main_id:" + main_id)
-    println("other_id:" + other_ids)
+  def dumpPosition {
+    println("mainId:" + mainId)
+    println("otherId:" + otherIds)
     for((id,node) <- nodes){
       println("id:"+id)
       println(" position:" + node.r.toString)
@@ -136,11 +136,11 @@ class PositionsUpdater(var ids:Array[Int]) {
     val g = 5000.0d //反発力定数
     var l = 50.0d * Math.log(Math.E+i) //バネの自然長
     val a = 1.0d //空気抵抗の比例定数
-    def move_eular(dt:Double, a:Vector) {
+    def moveEular(dt:Double, a:Vector) {
       v = v + a * dt / m
       r = r + v * dt / m
     }
-    def get_spring_force(n:Node):Vector = {
+    def getSpringForce(n:Node):Vector = {
       val dr = r - n.r
       val d3 = dr.norm
       if (d3 < scala.Double.Epsilon){
@@ -151,7 +151,7 @@ class PositionsUpdater(var ids:Array[Int]) {
       val dl = d-l
       return Vector((-k*dl*(dr.x/d), -k*dl*(dr.y/d), -k*dl*(dr.z/d)))
     }
-    def get_replusive_force(n:Node):Vector = {
+    def getReplusiveForce(n:Node):Vector = {
       val dr = r - n.r
       val d3 = dr.norm
       if (d3 < scala.Double.Epsilon){
@@ -161,10 +161,10 @@ class PositionsUpdater(var ids:Array[Int]) {
       val d = Math.sqrt(d3)
       return Vector((g/d3*(dr.x/d), g/d3*(dr.y/d), g/d3*(dr.z/d)))
     }
-    def get_frictional_force():Vector = {
+    def getFrictionalForce():Vector = {
       return Vector((-a*v.x, -a*v.y, -a*v.z))
     }
-    def set_rank(i:Int) {
+    def setRank(i:Int) {
       this.i = i
       l = 50.0d * Math.log(Math.E+i)
     }

@@ -11,39 +11,39 @@ class Proximities(jsons: Iterator[String]){
   
   JSON.globalNumberParser = {input:String => input.toInt} // override behavior of parser for Numeric.
   for(json <- jsons) { // ToDo:型変換大量に必要なのどうにかしたい
-    val Some(parsed_json) = JSON.parseFull(json).asInstanceOf[Option[Map[String,Any]]]
-    val seq = parsed_json("Sequence").asInstanceOf[Int]
-    val date = new SimpleDateFormat("\"yyy/MM/dd HH:mm:ss\"\n").parse(parsed_json("Time").asInstanceOf[String])
-    val res = parsed_json("Result").asInstanceOf[Map[String,Any]]
-    val user_id = res("Sample").asInstanceOf[Int]
+    val Some(parsedJson) = JSON.parseFull(json).asInstanceOf[Option[Map[String,Any]]]
+    val seq = parsedJson("Sequence").asInstanceOf[Int]
+    val date = new SimpleDateFormat("\"yyy/MM/dd HH:mm:ss\"\n").parse(parsedJson("Time").asInstanceOf[String])
+    val res = parsedJson("Result").asInstanceOf[Map[String,Any]]
+    val userId = res("Sample").asInstanceOf[Int]
     val topk = res("Topk").asInstanceOf[List[Int]].toArray
     
     val tupple = (seq,date,topk)
-    val new_tupple = (container.get(user_id) match {
+    val newTupple = (container.get(userId) match {
       case Some(s) => tupple :: s
       case None => tupple :: Nil
     })
-    container += user_id -> new_tupple
+    container += userId -> newTupple
   }
   container.transform((k,v) => v.reverse)
   
 
-  def get_users:Set[Int] = container.keySet.toSet
+  def getUsers:Set[Int] = container.keySet.toSet
 
-  def find(user_id: Int):(Int,List[(Int, Date, Array[Int])]) = (user_id,container(user_id))
+  def find(userId: Int):(Int,List[(Int, Date, Array[Int])]) = (userId,container(userId))
   
   def find():(Int,List[(Int, Date, Array[Int])]) = next // fix?
 
-  private var user_iterator = get_users.iterator
+  private var userIterator = getUsers.iterator
   def next():(Int,List[(Int, Date, Array[Int])]) = {
     try {
-      val user_id = user_iterator.next
-      (user_id,container(user_id))
+      val userId = userIterator.next
+      (userId,container(userId))
     } catch {
       case e:NoSuchElementException => {
-	user_iterator = get_users.iterator
-	val user_id = user_iterator.next
-	(user_id,container(user_id)) // ToDo:中括弧外す
+	userIterator = getUsers.iterator
+	val userId = userIterator.next
+	(userId,container(userId))
       }
     }
   }
