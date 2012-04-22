@@ -10,7 +10,7 @@ object TwitterAnalysis {
   class Embedded extends PApplet with MyPExtention with MyDrawingTools {
     // data
     val proximities = new Proximities(scala.io.Source.fromFile("/Users/Altech/dev/twitter_demo/src/main/resources/single_topn_50.json").getLines)
-    val namelist = scala.io.Source.fromFile("/Users/Altech/dev/twitter_demo/src/main/resources/single_topn_50_userlist.tsv").getLines.toList.map(_.split("\t").toList.take(2)).map(ls => (ls.head.toInt,ls.tail.head)).toMap
+    val nameList = scala.io.Source.fromFile("/Users/Altech/dev/twitter_demo/src/main/resources/single_topn_50_userlist.tsv").getLines.toList.map(_.split("\t").toList.take(2)).map(ls => (ls.head.toInt,ls.tail.head)).toMap
     var (targetId,sequences): (Int,List[(Int, Date, Array[Int])]) = proximities.find()
     var (seqNo,time,topk) = sequences.head; sequences = sequences.tail; 
     var visibleRelatedUsers = 10
@@ -28,42 +28,53 @@ object TwitterAnalysis {
     val miniWidth = 500
     val miniHeight = 500
     val defaultFont = createFont("Helvetica",32)
-    val defaultFontSmall = createFont("Helvetica",18)
+    val defaultFontSmall = createFont("Helvetica",18*2)
     val defaultFontMini = createFont("Helvetica",8)
     val arialFont = createFont("Arial",32)
     val arialFontSmall = createFont("Arial",16)
-    val timeFont = createFont("Krungthep",32)
-    val timeFormat = new java.text.SimpleDateFormat("yyy/MM/dd HH:mm")
-    val bg = loadImage("bg4.png")
+    val timeFont = createFont("Krungthep",32*2)
+    val timeFormat = new java.text.SimpleDateFormat("yyyy/MM/dd HH:mm")
+    val bg = loadImage("bg5-5.png")
     val slideBar = loadImage("bar.png")
     val buttonPlay = loadImage("button_play.png")
     val buttonStop = loadImage("button_stop.png")
     val buttonEnd = loadImage("button_end.png")
     
     // objects
-    var vartexCoordinates = Map[Int,(Int,Int)]()
+    var vartexCoordinates = Map[Int,(Float,Float,Float)]()
     var scaleBarCoordinates = ((0,0),(0,0));
     var zoomBarCoordinates =  ((0,0),(0,0));
+    var buttonSwitchUser = ((777,497),(974,545));
     var buttonPlayCoordinates = (0,0);
     var buttonStopCoordinates = (0,0);
     var buttonEndCoordinates = (0,0);
       
     override def draw {
       drawInit
-
+      background(bg)
+      
       translate((width-miniWidth)/2,50){
 	top {
 	  textFont(defaultFontSmall)
 	  fill(73,142,255)
-	  text("Target User : " + targetId, 10, 30)
-	  text("Top10 :" + topk.mkString(","), 10, 60)
-	  // text("Frame Count: " + frameCount,10,30)
+	  scale(0.5f)
+	  text("Target User : " + nameList(targetId), 10*2, 25*2)
+	  text("Top3 : " + topk.drop(1).take(3).map(nameList(_)).mkString(", "), 10*2, 50*2)
+	  scale(2.0f)
+	  stroke(73*0.8f,142*0.8f,255*0.8f)
+	  line(10,60,miniWidth-10,60)
+	  stroke(73*0.6f,142*0.6f,255*0.6f)
+	  line(10,61,miniWidth-10,61)
+	  noStroke
 	}
 
 	translate(10,miniHeight-60){
 	  textFont(timeFont)
 	  fill(73,142,255)
-	  text(timeFormat.format(time),10,40)
+	  val hereScale = 2
+	  scale(1.0f/hereScale)
+	  text(timeFormat.format(time),10*hereScale,40*hereScale)
+	  scale(hereScale)
 	  textFont(defaultFont) // fix later
 	}
 	
@@ -71,27 +82,37 @@ object TwitterAnalysis {
 	  setAmbientRight
 	
 	  translate(miniWidth/2,miniHeight/2) {
-	    // rotateNext {
+	    rotateNext {
 	      drawPositions(targetId,positions.get)
-	      vartexCoordinates = positions.get.mapValues(xyz => (modelX(screenX(xyz),screenY(xyz),screenZ(xyz)).toInt,modelY(screenX(xyz),screenY(xyz),screenZ(xyz)).toInt))
-	      // vartexCoordinates = positions.get.mapValues(xyz => (modelX
-	      
-	      for((id,(x,y,z)) <- positions.get){
-	      	fill(255)
-	      	textFont(defaultFontSmall)
-	      	text(namelist(id),x+30,y,0)
+	      vartexCoordinates = positions.get.mapValues(xyz => (modelX(xyz),modelY(xyz),modelZ(xyz)))
+	    }
+	    
+	    for((id,(x,y,z)) <- positions.get){
+	      pushMatrix
+	      rotateY(radians(r))
+	      var (dx,dy,dz) = (0.0f,0.0f,0.0f)
+	      translate(x,y,z){
+		dx = modelX(x,y,z)
+		dy = modelY(x,y,z)
+		dz = modelZ(x,y,z)
 	      }
-	      
-	    // }
+	      popMatrix
+	      pushMatrix
+	      fill(255)
+	      textFont(defaultFont)
+	      scale(0.5f)
+	      text(nameList(id),dx-miniWidth/2-(width-miniWidth)/2+60,dy-miniHeight/2-50,dz-(500-cameraDistance))
+	      popMatrix
+	    }
+
 	  }
-	  // println(vartexCoordinates.toString)
 	}
 
       }
       noLights      
         
       imageMode(CORNER)
-      image(bg,0,0)
+      // image(bg,0,0)
 
       translate(width/2,height-50){
 	imageMode(CENTER)
@@ -134,14 +155,6 @@ object TwitterAnalysis {
 	case Nil => Nil
       }
       positions.next
-
-      // popMatrix
-      // println(vartexCoordinates.toString)
-      // for((id,coordinates) <- vartexCoordinates){
-      // 	fill(100)
-      // 	textFont(defaultFontMini)
-      // 	text(id,-coordinates._1,-coordinates._2,0)
-      // }
   
 
     }
@@ -165,7 +178,7 @@ object TwitterAnalysis {
     // event
     override def mousePressed {
       if(isInSquare((mouseX,mouseY),buttonEndCoordinates,25)){
-	switchUser
+	switchUser(targetId)
 	noLoop
 	isPlaying = false
       }
@@ -195,6 +208,9 @@ object TwitterAnalysis {
       }
       else if(isInRectangle((mouseX,mouseY),zoomBarCoordinates)){
 	cameraDistance = ((1 - (mouseX.toFloat - zoomBarCoordinates._1._1)/(zoomBarCoordinates._2._1 - zoomBarCoordinates._1._1))*maxCameraDistance).toInt
+      }
+      else if(isInRectangle((mouseX,mouseY),buttonSwitchUser)){
+	switchUser
       }
     }
 
@@ -253,7 +269,6 @@ object TwitterAnalysis {
 	    fill(235,96,160)
 	    sphere(30)
 	  }
-	  // println("distance[" + id.toString + "]:" + Math.sqrt(position._1*position._1 + position._2*position._2 + position._3*position._3).toString)
 	}
 	strokeAndSmoothDraw(255) {
 	  lineToPosition(position)
@@ -286,6 +301,9 @@ object TwitterAnalysis {
     def screenX(xyz:(Int,Int,Int)) = { super.screenX(xyz._1,xyz._2,xyz._3)}
     def screenY(xyz:(Int,Int,Int)) = { super.screenY(xyz._1,xyz._2,xyz._3)}
     def screenZ(xyz:(Int,Int,Int)) = { super.screenZ(xyz._1,xyz._2,xyz._3)}
+    def modelX(xyz:(Int,Int,Int)) = { super.modelX(xyz._1,xyz._2,xyz._3)}
+    def modelY(xyz:(Int,Int,Int)) = { super.modelY(xyz._1,xyz._2,xyz._3)}
+    def modelZ(xyz:(Int,Int,Int)) = { super.modelZ(xyz._1,xyz._2,xyz._3)}
     def translate(dx:Int, dy:Int)(f: => Unit) = { super.translate(dx,dy,0); f; super.translate(-dx,-dy,0);}
     def translate(dx:Int, dy:Int, dz:Int)(f: => Unit) = { super.translate(dx,dy,dz); f; super.translate(-dx,-dy,-dz);}
     def translate(dr:(Int,Int,Int))(f: => Unit) = { super.translate(dr._1,dr._2,dr._3); f; super.translate(-dr._1,-dr._2,-dr._3) }
