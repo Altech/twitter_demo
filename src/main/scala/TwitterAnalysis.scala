@@ -4,13 +4,14 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import processing.core._
 import processing.core.PConstants._
+import com.nootropic.processing.layers._
 
 object TwitterAnalysis {
 
-  class Embedded extends PApplet with MyPExtention with MyDrawingTools {
+  class Embedded extends PApplet with MyPExtention with MyDrawingTools {  
     // data
-    val proximities = new Proximities(scala.io.Source.fromFile("/Users/Altech/dev/twitter_demo/src/main/resources/single_topn_50.json").getLines)
-    val nameList = scala.io.Source.fromFile("/Users/Altech/dev/twitter_demo/src/main/resources/single_topn_50_userlist.tsv").getLines.toList.map(_.split("\t").toList.take(2)).map(ls => (ls.head.toInt,ls.tail.head)).toMap
+    val proximities = new Proximities(scala.io.Source.fromFile("/Users/Altech/dev/twitter_demo/src/main/resources/single_topn_100.json").getLines)
+    val nameList = scala.io.Source.fromFile("/Users/Altech/dev/twitter_demo/src/main/resources/single_topn_100_userlist.tsv").getLines.toList.map(_.split("\t").toList.take(2)).map(ls => (ls.head.toInt,ls.tail.head)).toMap
     var (targetId,sequences): (Int,List[(Int, Date, Array[Int])]) = proximities.find()
     var (seqNo,time,topk) = sequences.head; sequences = sequences.tail; 
     var visibleRelatedUsers = 10
@@ -35,6 +36,7 @@ object TwitterAnalysis {
     val timeFont = createFont("Krungthep",32*2)
     val timeFormat = new java.text.SimpleDateFormat("yyyy/MM/dd HH:mm")
     val bg = loadImage("bg5-5.png")
+    val top_bg = loadImage("bg6.png")
     val slideBar = loadImage("bar.png")
     val buttonPlay = loadImage("button_play.png")
     val buttonStop = loadImage("button_stop.png")
@@ -58,8 +60,8 @@ object TwitterAnalysis {
 	  textFont(defaultFontSmall)
 	  fill(73,142,255)
 	  scale(0.5f)
-	  text("Target User : " + nameList(targetId), 10*2, 25*2)
-	  text("Top3 : " + topk.drop(1).take(3).map(nameList(_)).mkString(", "), 10*2, 50*2)
+	  text("Analized user : " + nameList(targetId), 10*2, 25*2)
+	  text("Most related : " + topk.drop(1).take(3).map(nameList(_)).mkString(", ") + ", ...", 10*2, 50*2)
 	  scale(2.0f)
 	  stroke(73*0.8f,142*0.8f,255*0.8f)
 	  line(10,60,miniWidth-10,60)
@@ -75,7 +77,7 @@ object TwitterAnalysis {
 	  scale(1.0f/hereScale)
 	  text(timeFormat.format(time),10*hereScale,40*hereScale)
 	  scale(hereScale)
-	  textFont(defaultFont) // fix later
+	  textFont(defaultFont) 
 	}
 	
 	translate(0,0,500-cameraDistance){
@@ -162,17 +164,15 @@ object TwitterAnalysis {
 
     // setting
     override def setup {
-      super.setup
+      super.setup      
+      layers.addLayer(new FrameLayer(this,top_bg))
       frameRate(15)
       size(1000,650,P3D)
-      // noLoop
       textFont(defaultFont)
     }
     def setAmbientRight {
       directionalLight(255, 255, 255, 0, 0, -1)
-      // directionalLight(126, 126, 126, 0, 0, -1)
       ambientLight(102, 102, 102)
-      // ambientLight(256, 256, 256)
     }
 
     // event
@@ -199,7 +199,6 @@ object TwitterAnalysis {
       	    seqNo = head._1
       	    time  = head._2
       	    topk  = head._3.take(visibleRelatedUsers+1)
-	    println("topk:" + topk.mkString(","))
 	    sequences = tail
 	    positions = new PositionsUpdater(topk)
 	  }
@@ -259,13 +258,10 @@ object TwitterAnalysis {
       for((id,position) <- positions) {
 	translate(position) {
 	  if (id == targetId){
-	    // fill(0,255,255) // bright blue
 	    fill(0,200,200)
 	    sphere(30)
 	  }
 	  else {
-	    // fill(0,38,188) // deep blue
-	    // fill(231,223,0) // bright yellow
 	    fill(235,96,160)
 	    sphere(30)
 	  }
@@ -278,12 +274,21 @@ object TwitterAnalysis {
   }
   
   trait MyPExtention extends PApplet {
+    var layers:AppletLayers = null
+    override def paint(g:java.awt.Graphics) {
+      // This method MUST be present in your sketch for layers to be rendered
+      if (layers != null) 
+	layers.paint(this)
+      else 
+	super.paint(g)
+    }
 
     override def setup {
+      layers = new AppletLayers(this)
       noSmooth
       noStroke
     }
-
+    
     def drawInit {
       background(0)
       fill(255)
@@ -318,15 +323,33 @@ object TwitterAnalysis {
     
   }
   
+  class FrameLayer(parent:Embedded,bg:PImage) extends Layer(parent) {
+    override def draw {
+      imageMode(CORNER)
+      image(bg,0,0)
+      translate(parent.width/2+parent.miniWidth/2,0)
+	val barWidth = 137
+	val barLeft = 95
+	translate(barLeft,86)
+	imageMode(CENTER)
+	image(parent.slideBar,(parent.visibleRelatedUsers.toFloat/parent.maxVisibleRelatedUsers.toFloat)*barWidth,0)
+	translate(-barLeft,-86)
+	translate(barLeft,154)
+	imageMode(CENTER)
+	image(parent.slideBar,barWidth-(parent.cameraDistance.toFloat/parent.maxCameraDistance.toFloat)*barWidth,0)
+	translate(-barLeft,-154)
+      translate(-parent.width/2+parent.miniWidth/2,0)
+    }
+  }
   
   def main(args: Array[String]) {
     println("Application will be open.")
     
     val rootFrame = new javax.swing.JFrame("Twitter Analysis")
-    val rootApplet = new Applet // ブラウザ上ではアプレットがルートになる
+    val rootApplet = new Applet // ブラウザ上ではアプレットがルートになる予定
     rootFrame.getContentPane().add(rootApplet)
     
-    val embeddedApplet = new Embedded//(sample_data)
+    val embeddedApplet = new Embedded
     rootApplet.add(embeddedApplet)
     embeddedApplet.init
     

@@ -33,11 +33,6 @@ class PositionsUpdater(var ids:Array[Int]) {
     val deletedIds = ids.toSet -- newIds.toSet
     val insertedIds = newIds.toSet -- ids.toSet
     ids = newIds
-    if (!deletedIds.isEmpty){
-      println("deletedIds" + deletedIds.toString)
-      println("insertedIds" + insertedIds.toString)
-    }
-    
 
     // new
     for((id,i) <- ids zipWithIndex){
@@ -45,12 +40,6 @@ class PositionsUpdater(var ids:Array[Int]) {
     	case Some(node) => node.setRank(i)
     	case None => nodes += id -> Node(i)
       }
-    }
-
-    // debug
-    if(!deletedIds.isEmpty){
-      println("\nbefore:")
-      dumpPosition
     }
     
     // delete
@@ -60,9 +49,6 @@ class PositionsUpdater(var ids:Array[Int]) {
       val oldPosition = nodes(deletedId).r
       val getNewPosition = ((old:Double,base:Double)=> (old-base)*5+base)
 	val newPosition = Vector((getNewPosition(oldPosition.x,basePosition.x),getNewPosition(oldPosition.y,basePosition.y),getNewPosition(oldPosition.z,basePosition.z)))
-      // println("oldPosition:" + oldPosition.toString)
-      // println("basePosition:" + basePosition.toString)
-      // println("newPosition:" + newPosition.toString)
       nodes(insertedId).r = newPosition
       nodes.remove(deletedId)
     }
@@ -74,21 +60,16 @@ class PositionsUpdater(var ids:Array[Int]) {
       nodes(mainId) << nodes(otherId)
       nodes(otherId) << nodes(mainId)
     }
-
-    if(!deletedIds.isEmpty){
-      println("\nafter:")
-      dumpPosition
-    }
   
   }
 
   def next {
     for (i <- 1 to 5) {
-      for((id,node) <- nodes if id != mainId){
+      for((id,node) <- nodes if id != mainId){ // 中心ノードは固定
 	var f = Vector((0,0,0))
 	for(neighbor <- node.neighbors)
 	  f = f + node.getSpringForce(neighbor)
-	for((otherId,otherNode) <- nodes if id != otherId) // 中心ノードは固定
+	for((otherId,otherNode) <- nodes if id != otherId) 
 	  f = f + node.getReplusiveForce(otherNode)
 	f = f + node.getFrictionalForce
 	node.moveEular(dt,f)
@@ -99,8 +80,6 @@ class PositionsUpdater(var ids:Array[Int]) {
   def get():Map[Int,(Int,Int,Int)] = {
     val basePosition = nodes(mainId).r
     val returnValue = nodes.toMap.mapValues(_.r).mapValues(p => (p-basePosition)).mapValues(_.p).mapValues(p => (p._1.toInt,p._2.toInt,p._3.toInt))
-    // for((k,v) <- return_value)
-    //   println(k.toString + ':' + v.toString)
     returnValue    
   }
 
