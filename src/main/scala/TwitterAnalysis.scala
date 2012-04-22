@@ -9,11 +9,16 @@ object TwitterAnalysis {
 
   class Embedded extends PApplet with MyPExtention with MyDrawingTools {
     // data
-    val proximities = new Proximities(scala.io.Source.fromFile("/Users/Altech/dev/twitter_demo/src/main/resources/single_topn.json").getLines)
+    val proximities = new Proximities(scala.io.Source.fromFile("/Users/Altech/dev/twitter_demo/src/main/resources/single_topn_50.json").getLines)
+    val namelist = scala.io.Source.fromFile("/Users/Altech/dev/twitter_demo/src/main/resources/single_topn_50_userlist.tsv").getLines.toList.map(_.split("\t").toList.take(2)).map(ls => (ls.head.toInt,ls.tail.head)).toMap
     var (targetId,sequences): (Int,List[(Int, Date, Array[Int])]) = proximities.find()
-    var (seqNo,time,topk) = sequences.head; sequences = sequences.tail;
-    var positions = new PositionsUpdater(topk)
+    var (seqNo,time,topk) = sequences.head; sequences = sequences.tail; 
     var visibleRelatedUsers = 10
+    val maxVisibleRelatedUsers = 100
+    var cameraDistance = 500
+    var maxCameraDistance = 1000
+    topk = topk.take(visibleRelatedUsers+1)
+    var positions = new PositionsUpdater(topk)
     
     // animation status
     var isPlaying = true
@@ -24,18 +29,25 @@ object TwitterAnalysis {
     val miniHeight = 500
     val defaultFont = createFont("Helvetica",32)
     val defaultFontSmall = createFont("Helvetica",18)
+    val defaultFontMini = createFont("Helvetica",8)
+    val arialFont = createFont("Arial",32)
+    val arialFontSmall = createFont("Arial",16)
     val timeFont = createFont("Krungthep",32)
     val timeFormat = new java.text.SimpleDateFormat("yyy/MM/dd HH:mm")
-    val bg = loadImage("bg3.png")
+    val bg = loadImage("bg4.png")
+    val slideBar = loadImage("bar.png")
     val buttonPlay = loadImage("button_play.png")
     val buttonStop = loadImage("button_stop.png")
     val buttonEnd = loadImage("button_end.png")
     
     // objects
-    var buttonPlayCoordinates = (0,0)
-    var buttonStopCoordinates = (0,0)
-    var buttonEndCoordinates = (0,0)
-    
+    var vartexCoordinates = Map[Int,(Int,Int)]()
+    var scaleBarCoordinates = ((0,0),(0,0));
+    var zoomBarCoordinates =  ((0,0),(0,0));
+    var buttonPlayCoordinates = (0,0);
+    var buttonStopCoordinates = (0,0);
+    var buttonEndCoordinates = (0,0);
+      
     override def draw {
       drawInit
 
@@ -55,19 +67,29 @@ object TwitterAnalysis {
 	  textFont(defaultFont) // fix later
 	}
 	
-	translate(0,0,0){
+	translate(0,0,500-cameraDistance){
 	  setAmbientRight
 	
 	  translate(miniWidth/2,miniHeight/2) {
-	    rotateNext {
+	    // rotateNext {
 	      drawPositions(targetId,positions.get)
-	    }
+	      vartexCoordinates = positions.get.mapValues(xyz => (modelX(screenX(xyz),screenY(xyz),screenZ(xyz)).toInt,modelY(screenX(xyz),screenY(xyz),screenZ(xyz)).toInt))
+	      // vartexCoordinates = positions.get.mapValues(xyz => (modelX
+	      
+	      for((id,(x,y,z)) <- positions.get){
+	      	fill(255)
+	      	textFont(defaultFontSmall)
+	      	text(namelist(id),x+30,y,0)
+	      }
+	      
+	    // }
 	  }
+	  // println(vartexCoordinates.toString)
 	}
-		
-      }
 
-      noLights
+      }
+      noLights      
+        
       imageMode(CORNER)
       image(bg,0,0)
 
@@ -80,27 +102,55 @@ object TwitterAnalysis {
 	buttonPlayCoordinates = (screenX(0,0,0).toInt,screenY(0,0,0).toInt)
 	buttonStopCoordinates = (screenX(60,0,0).toInt,screenY(60,0,0).toInt)
       }
+
+      translate(width/2+miniWidth/2,0){
+	val barWidth = 137
+	val barLeft = 95
+	translate(barLeft,86){
+	  scaleBarCoordinates = ((screenX(0,0,0).toInt,screenY(0,0,0).toInt),(screenX(barWidth,3,0).toInt,screenY(barWidth,3,0).toInt))
+	  imageMode(CENTER)
+	  image(slideBar,(visibleRelatedUsers.toFloat/maxVisibleRelatedUsers.toFloat)*barWidth,0)
+	}
+	translate(barLeft,154){
+	  zoomBarCoordinates = ((screenX(0,0,0).toInt,screenY(0,0,0).toInt),(screenX(barWidth,3,0).toInt,screenY(barWidth,3,0).toInt))
+	  imageMode(CENTER)
+	  image(slideBar,barWidth-(cameraDistance.toFloat/maxCameraDistance.toFloat)*barWidth,0)
+	}
+      }
       
-      updateTime
-      if (!(time.before(sequences.head._2))){
-	// println("update_bef:" + topk.mkString(","))
-      	seqNo = sequences.head._1
-      	time  = sequences.head._2
-      	topk  = sequences.head._3
-      	sequences = sequences.tail
-      	positions.update(topk) // ToDo
-	// println("update_aft:" + topk.mkString(","))
+      sequences match {
+	case head :: tail => {
+	  updateTime
+	  if (!(time.before(head._2))){
+      	    seqNo = head._1
+      	    time  = head._2
+      	    topk  = head._3.take(visibleRelatedUsers+1)
+	    sequences = tail
+	    // println("update_bef:" + topk.mkString(","))
+	    positions.update(topk)
+	    // println("update_aft:" + topk.mkString(","))
+	  }
+	}
+	case Nil => Nil
       }
       positions.next
 
-      frameCount += 1
+      // popMatrix
+      // println(vartexCoordinates.toString)
+      // for((id,coordinates) <- vartexCoordinates){
+      // 	fill(100)
+      // 	textFont(defaultFontMini)
+      // 	text(id,-coordinates._1,-coordinates._2,0)
+      // }
+  
+
     }
 
 
     // setting
     override def setup {
       super.setup
-      // frameRate(15)
+      frameRate(15)
       size(1000,650,P3D)
       // noLoop
       textFont(defaultFont)
@@ -129,6 +179,23 @@ object TwitterAnalysis {
 	  noLoop
 	isPlaying = false
       }
+      else if(isInRectangle((mouseX,mouseY),scaleBarCoordinates)){
+	visibleRelatedUsers = ((mouseX.toFloat - scaleBarCoordinates._1._1)/(scaleBarCoordinates._2._1 - scaleBarCoordinates._1._1)*maxVisibleRelatedUsers).toInt
+	sequences match {
+	  case head :: tail => {
+      	    seqNo = head._1
+      	    time  = head._2
+      	    topk  = head._3.take(visibleRelatedUsers+1)
+	    println("topk:" + topk.mkString(","))
+	    sequences = tail
+	    positions = new PositionsUpdater(topk)
+	  }
+	  case Nil => Nil
+	}
+      }
+      else if(isInRectangle((mouseX,mouseY),zoomBarCoordinates)){
+	cameraDistance = ((1 - (mouseX.toFloat - zoomBarCoordinates._1._1)/(zoomBarCoordinates._2._1 - zoomBarCoordinates._1._1))*maxCameraDistance).toInt
+      }
     }
 
     def switchUser(userID:Int) {
@@ -137,7 +204,7 @@ object TwitterAnalysis {
       sequences = proximity._2
       seqNo = sequences.head._1
       time  = sequences.head._2
-      topk  = sequences.head._3
+      topk  = sequences.head._3.take(visibleRelatedUsers+1)
       sequences = sequences.tail
       positions = new PositionsUpdater(topk)
     }
@@ -148,7 +215,7 @@ object TwitterAnalysis {
       sequences = proximity._2
       seqNo = sequences.head._1
       time  = sequences.head._2
-      topk  = sequences.head._3
+      topk  = sequences.head._3.take(visibleRelatedUsers+1)
       sequences = sequences.tail
       positions = new PositionsUpdater(topk)
     }
@@ -216,6 +283,9 @@ object TwitterAnalysis {
     def center(f: => Unit) = { super.translate(width/2, height/2); f; super.translate(-width/2, -height/2); }
     def centerX(f: => Unit) = { super.translate(width/2, 0); f; super.translate(-width/2, 0); }
     def centerY(f: => Unit) = { super.translate(0, height/2); f; super.translate(0, -height/2); }
+    def screenX(xyz:(Int,Int,Int)) = { super.screenX(xyz._1,xyz._2,xyz._3)}
+    def screenY(xyz:(Int,Int,Int)) = { super.screenY(xyz._1,xyz._2,xyz._3)}
+    def screenZ(xyz:(Int,Int,Int)) = { super.screenZ(xyz._1,xyz._2,xyz._3)}
     def translate(dx:Int, dy:Int)(f: => Unit) = { super.translate(dx,dy,0); f; super.translate(-dx,-dy,0);}
     def translate(dx:Int, dy:Int, dz:Int)(f: => Unit) = { super.translate(dx,dy,dz); f; super.translate(-dx,-dy,-dz);}
     def translate(dr:(Int,Int,Int))(f: => Unit) = { super.translate(dr._1,dr._2,dr._3); f; super.translate(-dr._1,-dr._2,-dr._3) }
@@ -224,12 +294,15 @@ object TwitterAnalysis {
     def isInSquare(point:(Int,Int), center:(Int,Int), r:Int) = {
       center._1-r <= point._1 && point._1 <= center._1+r  &&  center._2-r <= point._2 && point._2 <= center._2+r
     }
+    def isInRectangle(point:(Int,Int), corners:((Int,Int),(Int,Int))) = {
+      corners._1._1 <= point._1 && point._1 <= corners._2._1 && corners._1._2 <= point._2 && point._2 <= corners._2._2
+    }
     
   }
   
   
   def main(args: Array[String]) {
-    println("Application will be open")
+    println("Application will be open.")
     
     val rootFrame = new javax.swing.JFrame("Twitter Analysis")
     val rootApplet = new Applet // ブラウザ上ではアプレットがルートになる

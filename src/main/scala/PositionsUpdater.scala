@@ -13,7 +13,6 @@ class PositionsUpdater(var ids:Array[Int]) {
       nodes(mainId) << nodes(otherId)
       nodes(otherId) << nodes(mainId)
     }
-    nodes(mainId).m = 10 // 中心ノードは固定（質量大）
   }
 
   def initPositions() {
@@ -85,11 +84,11 @@ class PositionsUpdater(var ids:Array[Int]) {
 
   def next {
     for (i <- 1 to 5) {
-      for((id,node) <- nodes){
+      for((id,node) <- nodes if id != mainId){
 	var f = Vector((0,0,0))
 	for(neighbor <- node.neighbors)
 	  f = f + node.getSpringForce(neighbor)
-	for((otherId,otherNode) <- nodes if id != otherId)
+	for((otherId,otherNode) <- nodes if id != otherId) // 中心ノードは固定
 	  f = f + node.getReplusiveForce(otherNode)
 	f = f + node.getFrictionalForce
 	node.moveEular(dt,f)

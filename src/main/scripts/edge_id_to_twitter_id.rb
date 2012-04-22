@@ -27,12 +27,12 @@ end
 prox_data.each do |l|
   json = JSON.parse(l)
   next if not json.include? 'Sequence'
-  # next unless json['Result']['Sample'] == 2238611 # FIXME
+  next unless json['Result']['Sample'] == 2238611 # [FIXME]
 
   json['Time'] = seq_to_time[json['Sequence'].to_i+7872371] # [FIXME] 固定値は始まり時点のSequence.
   result = json['Result']
   result['Sample'] = mapping[result['Sample']]
-  result['Topk'] = result['Topk'][0..10].map{|id| mapping[id]}
+  result['Topk'] = result['Topk'][0..50].map{|id| mapping[id]}
   
   converted_json << json
 end
