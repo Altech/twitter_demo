@@ -24,6 +24,7 @@ object TwitterAnalysis {
     
     // animation status
     var isPlaying = true
+    var isRotation = true
     var r = 0
 
     // view 
@@ -33,9 +34,10 @@ object TwitterAnalysis {
     val defaultFontSmall = createFont("Helvetica",18*2)
     val timeFont = createFont("Krungthep",32*2)
     val timeFormat = new java.text.SimpleDateFormat("yyyy/MM/dd HH:mm")
-    val bg = loadImage("bg5-5.png")
-    val top_bg = loadImage("bg6.png")
+    val bg = loadImage("bg7_1.png")
+    val top_bg = loadImage("bg7_2.png")
     val slideBar = loadImage("bar.png")
+    val check = loadImage("check.png")
     val buttonPlay = loadImage("button_play.png")
     val buttonStop = loadImage("button_stop.png")
     val buttonEnd = loadImage("button_end.png")
@@ -43,6 +45,7 @@ object TwitterAnalysis {
     // object coordinates 
     var scaleBarCoordinates = ((0,0),(0,0));
     var zoomBarCoordinates =  ((0,0),(0,0));
+    var checkBoxCoordinates =  ((893,205),(921,233));
     var buttonSwitchUser = ((777,497),(974,545));
     var buttonPlayCoordinates = (0,0);
     var buttonStopCoordinates = (0,0);
@@ -81,9 +84,10 @@ object TwitterAnalysis {
 	  setAmbientRight
 	  translate(miniWidth/2,miniHeight/2) {
 	    /// draw vertex
-	    rotateNext {
-	      drawPositions(targetId,positions.get)
-	    }
+	    if (isRotation)
+	      rotateNext { drawPositions(targetId,positions.get) }
+	    else
+	      rotateYDraw(radians(r)){ drawPositions(targetId,positions.get) }
 	    // draw user name
 	    for((id,(x,y,z)) <- positions.get){
 	      pushMatrix
@@ -134,6 +138,9 @@ object TwitterAnalysis {
 	  image(slideBar,barWidth-(cameraDistance.toFloat/maxCameraDistance.toFloat)*barWidth,0)
 	}
       }
+      // check box
+      imageMode(CORNER)
+      if(isRotation) image(check,895,198)
 
       // update data
       sequences match {
@@ -144,9 +151,7 @@ object TwitterAnalysis {
       	    time  = head._2
       	    topk  = head._3.take(visibleRelatedUsers+1)
 	    sequences = tail
-	    // println("update_bef:" + topk.mkString(","))
 	    positions.update(topk)
-	    // println("update_aft:" + topk.mkString(","))
 	  }
 	}
 	case Nil => Nil
@@ -205,6 +210,9 @@ object TwitterAnalysis {
       }
       else if(isInRectangle((mouseX,mouseY),buttonSwitchUser)){
 	switchUser
+      }
+      else if(isInRectangle((mouseX,mouseY),checkBoxCoordinates)){
+	isRotation = if (isRotation) false else true
       }
     }
 
@@ -307,6 +315,7 @@ object TwitterAnalysis {
     def translate(dx:Int, dy:Int)(f: => Unit) = { super.translate(dx,dy,0); f; super.translate(-dx,-dy,0);}
     def translate(dx:Int, dy:Int, dz:Int)(f: => Unit) = { super.translate(dx,dy,dz); f; super.translate(-dx,-dy,-dz);}
     def translate(dr:(Int,Int,Int))(f: => Unit) = { super.translate(dr._1,dr._2,dr._3); f; super.translate(-dr._1,-dr._2,-dr._3) }
+    def rotateYDraw(r:Float)(f: => Unit) = { super.rotateY(r); f; super.rotateY(-r) }
     def lineToPosition(dr:(Int,Int,Int)) = line(0,0,0,dr._1,dr._2,dr._3)
     def text(time:Date,x:Int,y:Int) = { super.text(new SimpleDateFormat("yyyy'年'MM'月'dd'日' kk:mm").format(time),x,y) }
     def isInSquare(point:(Int,Int), center:(Int,Int), r:Int) = {
@@ -322,6 +331,7 @@ object TwitterAnalysis {
     override def draw {
       imageMode(CORNER)
       image(bg,0,0)
+            
       translate(parent.width/2+parent.miniWidth/2,0)
 	val barWidth = 137
 	val barLeft = 95
@@ -333,7 +343,11 @@ object TwitterAnalysis {
 	imageMode(CENTER)
 	image(parent.slideBar,barWidth-(parent.cameraDistance.toFloat/parent.maxCameraDistance.toFloat)*barWidth,0)
 	translate(-barLeft,-154)
-      translate(-parent.width/2+parent.miniWidth/2,0)
+      translate(-(parent.width/2+parent.miniWidth/2),0)
+
+      imageMode(CORNER)
+      if(parent.isRotation) image(parent.check,895,198)
+      
     }
   }
   
