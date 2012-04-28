@@ -11,15 +11,15 @@ object TwitterAnalysis {
 
   class Embedded extends PApplet with MyPExtention with MyDrawingTools {  
     // data
-    val proximities = new Proximities(scala.io.Source.fromFile("/Users/Altech/dev/twitter_demo/src/main/resources/10users_topn_100.json").getLines)
-    val nameList = scala.io.Source.fromFile("/Users/Altech/dev/twitter_demo/src/main/resources/10users_topn_100_userlist.tsv").getLines.toList.map(_.split("\t").toList.take(2)).map(ls => (ls.head.toInt,ls.tail.head)).toMap
+    val proximities = new Proximities(scala.io.Source.fromFile("/Users/Altech/dev/twitter_demo/src/main/resources/single_topn_100.json").getLines)
+    val nameList = scala.io.Source.fromFile("/Users/Altech/dev/twitter_demo/src/main/resources/single_topn_100_userlist.tsv").getLines.toList.map(_.split("\t").toList.take(2)).map(ls => (ls.head.toInt,ls.tail.head)).toMap
     var (targetId,sequences): (Int,List[(Int, Date, Array[Int])]) = proximities.find()
     var (seqNo,time,topk) = sequences.head; sequences = sequences.tail; 
     var visibleRelatedUsers = 50
     val maxVisibleRelatedUsers = 100
     var cameraDistance = 500
-    val maxCameraDistance = 1500
-    val minCameraDistance = 500
+    val maxCameraDistance = 1000
+    val minCameraDistance = 0
     val rotationSpeed = 1.0f/3.0f
     topk = topk.take(visibleRelatedUsers+1)
     var positions = new PositionsUpdater(topk)
@@ -106,7 +106,7 @@ object TwitterAnalysis {
 	      fill(255)
 	      textFont(defaultFont)
 	      scale(0.5f)
-	      text(nameList(id),dx-miniWidth/2-(width-miniWidth)/2+60,dy-miniHeight/2-50,dz-(500-cameraDistance))
+	      text(nameList(id),dx-miniWidth/2-(width-miniWidth)/2+60,dy-miniHeight/2-50,dz+cameraDistance)
 	      popMatrix
 	    }
 	  }
@@ -272,7 +272,7 @@ object TwitterAnalysis {
 	  }
 	}
 	strokeAndSmoothDraw(255) {
-	  fill(255,170)
+	  stroke(255,200)
 	  lineToPosition(position)
 	}
       }
