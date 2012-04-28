@@ -47,7 +47,7 @@ class PositionsUpdater(var ids:Array[Int]) {
     val basePosition = nodes(mainId).r
     for(insertedId <- insertedIds; deletedId = deletedIdIter.next){
       val oldPosition = nodes(deletedId).r
-      val getNewPosition = ((old:Double,base:Double)=> (old-base)*5+base)
+      val getNewPosition = ((old:Double,base:Double)=> (old-base)*3+base)
 	val newPosition = Vector((getNewPosition(oldPosition.x,basePosition.x),getNewPosition(oldPosition.y,basePosition.y),getNewPosition(oldPosition.z,basePosition.z)))
       nodes(insertedId).r = newPosition
       nodes.remove(deletedId)
@@ -111,8 +111,8 @@ class PositionsUpdater(var ids:Array[Int]) {
     var v = Vector(0,0,0)
     var m = 1.0
     val k = 0.1d //バネ定数
-    val g = 5000.0d //反発力定数
-    var l = 50.0d * Math.log(Math.E+i) //バネの自然長
+    val g = 500000.0d //反発力定数
+    var l = 1.0d * i * Math.sqrt(i)//Math.log(Math.E+i) //バネの自然長
     val a = 1.0d //空気抵抗の比例定数
     def moveEular(dt:Double, a:Vector) {
       v = v + a * dt / m
@@ -144,7 +144,7 @@ class PositionsUpdater(var ids:Array[Int]) {
     }
     def setRank(i:Int) {
       this.i = i
-      l = 50.0d * Math.log(Math.E+i)
+      l = 1.0d * i * Math.sqrt(i)//Math.log(Math.E+i)
     }
   }
   

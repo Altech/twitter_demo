@@ -36,16 +36,9 @@ class Proximities(jsons: Iterator[String]){
 
   private var userIterator = getUsers.iterator
   def next():(Int,List[(Int, Date, Array[Int])]) = {
-    try {
-      val userId = userIterator.next
-      (userId,container(userId))
-    } catch {
-      case e:NoSuchElementException => {
-	userIterator = getUsers.iterator
-	val userId = userIterator.next
-	(userId,container(userId))
-      }
-    }
+    if (!userIterator.hasNext) userIterator = getUsers.iterator
+    val userId = userIterator.next
+    (userId,container(userId))
   }
   
 

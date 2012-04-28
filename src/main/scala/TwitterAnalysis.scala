@@ -5,37 +5,40 @@ import java.util.Calendar
 import processing.core._
 import processing.core.PConstants._
 import com.nootropic.processing.layers._
+import gifAnimation.Gif
 
 object TwitterAnalysis {
 
   class Embedded extends PApplet with MyPExtention with MyDrawingTools {  
     // data
-    val proximities = new Proximities(scala.io.Source.fromFile("/Users/Altech/dev/twitter_demo/src/main/resources/single_topn_100.json").getLines)
-    val nameList = scala.io.Source.fromFile("/Users/Altech/dev/twitter_demo/src/main/resources/single_topn_100_userlist.tsv").getLines.toList.map(_.split("\t").toList.take(2)).map(ls => (ls.head.toInt,ls.tail.head)).toMap
+    val proximities = new Proximities(scala.io.Source.fromFile("/Users/Altech/dev/twitter_demo/src/main/resources/10users_topn_100.json").getLines)
+    val nameList = scala.io.Source.fromFile("/Users/Altech/dev/twitter_demo/src/main/resources/10users_topn_100_userlist.tsv").getLines.toList.map(_.split("\t").toList.take(2)).map(ls => (ls.head.toInt,ls.tail.head)).toMap
     var (targetId,sequences): (Int,List[(Int, Date, Array[Int])]) = proximities.find()
     var (seqNo,time,topk) = sequences.head; sequences = sequences.tail; 
-    var visibleRelatedUsers = 10
+    var visibleRelatedUsers = 50
     val maxVisibleRelatedUsers = 100
     var cameraDistance = 500
-    val maxCameraDistance = 1000
+    val maxCameraDistance = 1500
     val minCameraDistance = 500
+    val rotationSpeed = 1.0f/3.0f
     topk = topk.take(visibleRelatedUsers+1)
     var positions = new PositionsUpdater(topk)
     
     // animation status
     var isPlaying = true
     var isRotation = true
-    var r = 0
+    var r = 0.0f
 
-    // view 
+    // view
+    var frameLayer:FrameLayer = null
     val miniWidth = 500
     val miniHeight = 500
     val defaultFont = createFont("Helvetica",32)
     val defaultFontSmall = createFont("Helvetica",18*2)
     val timeFont = createFont("Krungthep",32*2)
     val timeFormat = new java.text.SimpleDateFormat("yyyy/MM/dd HH:mm")
-    val bg = loadImage("bg7_1.png")
-    val top_bg = loadImage("bg7_2.png")
+    val bg = loadImage("bg1.png")
+    val top_bg = loadImage("bg2.png")
     val slideBar = loadImage("bar.png")
     val check = loadImage("check.png")
     val buttonPlay = loadImage("button_play.png")
@@ -87,11 +90,11 @@ object TwitterAnalysis {
 	    if (isRotation)
 	      rotateNext { drawPositions(targetId,positions.get) }
 	    else
-	      rotateYDraw(radians(r)){ drawPositions(targetId,positions.get) }
+	      rotateYDraw(myRadians(r)*rotationSpeed){ drawPositions(targetId,positions.get) }
 	    // draw user name
 	    for((id,(x,y,z)) <- positions.get){
 	      pushMatrix
-	      rotateY(radians(r))
+	      rotateY(myRadians(r)*rotationSpeed)
 	      var (dx,dy,dz) = (0.0f,0.0f,0.0f)
 	      translate(x,y,z){
 		dx = modelX(x,y,z)
@@ -161,11 +164,11 @@ object TwitterAnalysis {
 
     }
 
-
     // setting
     override def setup {
-      super.setup      
-      layers.addLayer(new FrameLayer(this,top_bg))
+      super.setup
+      frameLayer = new FrameLayer(this,top_bg)
+      layers.addLayer(frameLayer)
       frameRate(15)
       size(1000,650,P3D)
       textFont(defaultFont)
@@ -217,7 +220,7 @@ object TwitterAnalysis {
     }
 
     def switchUser(userID:Int) {
-      val proximity = proximities.find()
+      val proximity = proximities.find(userID)
       targetId = proximity._1
       sequences = proximity._2
       seqNo = sequences.head._1
@@ -241,14 +244,14 @@ object TwitterAnalysis {
     // routines
     def rotateNext(f: => Unit) {
       r += 1
-      rotateY(radians(r))
+      rotateY(myRadians(r)*rotationSpeed)
       f
-      rotateY(radians(-r))
+      rotateY(myRadians(-r)*rotationSpeed)
       if (r == 360)
       	r == 0
     }
     def updateTime {
-      val interval = 1
+      val interval = 2
       val cal = Calendar.getInstance(); cal.setTime(time); cal.add(Calendar.MINUTE, interval)
       time = cal.getTime()
     }
@@ -269,6 +272,7 @@ object TwitterAnalysis {
 	  }
 	}
 	strokeAndSmoothDraw(255) {
+	  fill(255,170)
 	  lineToPosition(position)
 	}
       }
@@ -296,7 +300,7 @@ object TwitterAnalysis {
       fill(255)
     }
     
-    def radians(i:Int):Float = (i * 3.141592f)/180.0f
+    def myRadians(i:Float):Float = (i * 3.141592f)/180.0f
     def smoothDraw(f: => Unit) = {smooth(); f; noSmooth()}
     def strokeDraw(color:Int)(f: => Unit) = {stroke(color); f; noStroke()}
     def strokeAndSmoothDraw(color:Int)(f: => Unit) = {stroke(color); smooth(); f; noStroke(); noSmooth()}
@@ -328,7 +332,9 @@ object TwitterAnalysis {
   }
   
   class FrameLayer(parent:Embedded,bg:PImage) extends Layer(parent) {
+  
     override def draw {
+      background(0,0)
       imageMode(CORNER)
       image(bg,0,0)
             
