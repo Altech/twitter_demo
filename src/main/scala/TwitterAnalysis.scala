@@ -11,8 +11,8 @@ object TwitterAnalysis {
 
   class Embedded extends PApplet with MyPExtention with MyDrawingTools {  
     // data
-    val proximities = new Proximities(scala.io.Source.fromFile("/Users/Altech/dev/twitter_demo/src/main/resources/single_topn_100.json").getLines)
-    val nameList = scala.io.Source.fromFile("/Users/Altech/dev/twitter_demo/src/main/resources/single_topn_100_userlist.tsv").getLines.toList.map(_.split("\t").toList.take(2)).map(ls => (ls.head.toInt,ls.tail.head)).toMap
+    val proximities = new Proximities(scala.io.Source.fromFile("/Users/Altech/dev/twitter_demo/src/main/resources/10users_topn_100.json").getLines)
+    val nameList = scala.io.Source.fromFile("/Users/Altech/dev/twitter_demo/src/main/resources/10users_topn_100_userlist.tsv").getLines.toList.map(_.split("\t").toList.take(2)).map(ls => (ls.head.toInt,ls.tail.head)).toMap
     var (targetId,sequences): (Int,List[(Int, Date, Array[Int])]) = proximities.find()
     var (seqNo,time,topk) = sequences.head; sequences = sequences.tail; 
     var visibleRelatedUsers = 50
