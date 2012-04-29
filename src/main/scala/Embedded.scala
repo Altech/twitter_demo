@@ -6,7 +6,6 @@ import processing.core._
 import processing.core.PConstants._
 import com.nootropic.processing.layers._
 
-
 class Embedded extends PApplet with MyPExtention with MyDrawingTools {
   // data
   val proximities = new Proximities(scala.io.Source.fromURL(getClass.getResource("/10users_topn_100.json")).getLines)
@@ -28,6 +27,7 @@ class Embedded extends PApplet with MyPExtention with MyDrawingTools {
   var r = 0.0f
 
   // view
+  var layers:AppletLayers = null
   var frameLayer:FrameLayer = null
   val miniWidth = 500
   val miniHeight = 500
@@ -136,10 +136,11 @@ class Embedded extends PApplet with MyPExtention with MyDrawingTools {
     
 
   }
-
+  
   // setting
   override def setup {
     super.setup
+    layers = new AppletLayers(this)
     frameLayer = new FrameLayer(this,top_bg)
     layers.addLayer(frameLayer)
     frameRate(15)
@@ -229,7 +230,15 @@ class Embedded extends PApplet with MyPExtention with MyDrawingTools {
     time = cal.getTime()
   }
   
+  override def paint(g:java.awt.Graphics) {
+    // This method MUST be present in your sketch for layers to be rendered
+    if (layers != null) 
+      layers.paint(this)
+    else 
+      super.paint(g)
+  }
 }
+
 
 trait MyDrawingTools extends PApplet with MyPExtention {
   def drawPositions(targetId:Int, positions:Map[Int,(Int,Int,Int)]) {
@@ -253,17 +262,8 @@ trait MyDrawingTools extends PApplet with MyPExtention {
 }
 
 trait MyPExtention extends PApplet {
-  var layers:AppletLayers = null
-  override def paint(g:java.awt.Graphics) {
-    // This method MUST be present in your sketch for layers to be rendered
-    if (layers != null) 
-      layers.paint(this)
-    else 
-      super.paint(g)
-  }
 
   override def setup {
-    layers = new AppletLayers(this)
     noSmooth
     noStroke
   }
@@ -304,7 +304,8 @@ trait MyPExtention extends PApplet {
   
 }
 
-class FrameLayer(parent:Embedded,bg:PImage) extends Layer(parent) {
+
+class FrameLayer(parent: Embedded,bg:PImage) extends Layer(parent) {
   
   override def draw {
     background(0,0)
@@ -355,9 +356,12 @@ class FrameLayer(parent:Embedded,bg:PImage) extends Layer(parent) {
   }
 }
 
+  
+
 object ApplicationMain  {
   def main(args: Array[String]) {
     val embeddedApplet = new Embedded
     PApplet.runSketch(Array("title"), embeddedApplet)
   }
 }
+
