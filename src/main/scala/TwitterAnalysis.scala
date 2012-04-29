@@ -5,7 +5,6 @@ import java.util.Calendar
 import processing.core._
 import processing.core.PConstants._
 import com.nootropic.processing.layers._
-import gifAnimation.Gif
 
 object TwitterAnalysis {
 
@@ -59,30 +58,6 @@ object TwitterAnalysis {
       background(bg)
       
       translate((width-miniWidth)/2,50){
-	top {
-	  textFont(defaultFontSmall)
-	  fill(73,142,255)
-	  val hereScale = 0.5f
-	  scaleDraw(hereScale){
-	    text("Analized user : " + nameList(targetId), 10*(1.0f/hereScale), 25*(1.0f/hereScale))
-	    text("Most related : " + topk.drop(1).take(3).map(nameList(_)).mkString(", ") + ", ...", 10*(1.0f/hereScale), 50*(1.0f/hereScale))
-	  }
-	  stroke(73*0.8f,142*0.8f,255*0.8f)
-	  line(10,60,miniWidth-10,60)
-	  stroke(73*0.6f,142*0.6f,255*0.6f)
-	  line(10,61,miniWidth-10,61)
-	  noStroke
-	}
-
-	translate(10,miniHeight-60){
-	  textFont(timeFont)
-	  fill(73,142,255)
-	  val hereScale = 0.5f
-	  scaleDraw(hereScale) {
-	    text(timeFormat.format(time),10*(1.0f/hereScale),40*(1.0f/hereScale))
-	  }
-	}
-	
 	translate(0,0,minCameraDistance-cameraDistance){
 	  setAmbientRight
 	  translate(miniWidth/2,miniHeight/2) {
@@ -111,7 +86,6 @@ object TwitterAnalysis {
 	    }
 	  }
 	}
-
       }
       
       noLights
@@ -337,6 +311,32 @@ object TwitterAnalysis {
       background(0,0)
       imageMode(CORNER)
       image(bg,0,0)
+
+      translate((parent.width-parent.miniWidth)/2,50)
+	textFont(parent.defaultFontSmall)
+	fill(73,142,255)
+	val hereScale = 0.5f
+	scale(hereScale)
+	  text("Analized user : " + parent.nameList(parent.targetId), 10*(1.0f/hereScale), 25*(1.0f/hereScale))
+	  text("Most related : " + parent.topk.drop(1).take(3).map(parent.nameList(_)).mkString(", ") + ", ...", 10*(1.0f/hereScale), 50*(1.0f/hereScale))
+	scale(1/hereScale)
+      
+	stroke(73*0.8f,142*0.8f,255*0.8f)
+	line(10,60,parent.miniWidth-10,60)
+	stroke(73*0.6f,142*0.6f,255*0.6f)
+	line(10,61,parent.miniWidth-10,61)
+	noStroke
+      
+	translate(10,parent.miniHeight-60)
+	  textFont(parent.timeFont)
+	  fill(53,122,235)
+	  val hereScale2 = 0.5f
+	  scale(hereScale2)
+	    text(parent.timeFormat.format(parent.time),10*(1.0f/hereScale2),40*(1.0f/hereScale2))
+	  scale(1/hereScale2)
+	translate(-10,-(parent.miniHeight-60))
+      translate(-(parent.width-parent.miniWidth)/2,-50)
+      
             
       translate(parent.width/2+parent.miniWidth/2,0)
 	val barWidth = 137
